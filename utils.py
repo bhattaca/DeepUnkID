@@ -23,11 +23,11 @@ def load_data(dataset):
     labels = []
     partition_to_n_row = {}
     for partition in ['train', 'valid', 'test']:
-        with open("data/" + dataset + "/" + partition + ".seq.in") as fp:
+        with open("data/" + dataset + "/" + partition + ".seq.in" , encoding='utf-8') as fp:
             lines = fp.read().splitlines()
             texts.extend(lines)
             partition_to_n_row[partition] = len(lines)
-        with open("data/" + dataset + "/" + partition + ".label") as fp:
+        with open("data/" + dataset + "/" + partition + ".label", encoding='utf-8') as fp:
             labels.extend(fp.read().splitlines())
 
     df = pd.DataFrame([texts, labels]).T
@@ -50,7 +50,7 @@ def get_score(cm):
     print("Overall(macro): ", f)
     print("Seen(macro): ", f_seen)
     print("=====> Uneen(Experiment) <=====: ", f_unseen)
-    
+
     return f, f_seen, f_unseen
 
 def plot_confusion_matrix(cm, classes, normalize=False,
