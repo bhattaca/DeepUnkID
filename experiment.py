@@ -26,7 +26,7 @@ set_allow_growth(device="1")
 
 dataset = sys.argv[1]
 proportion = int(sys.argv[2])
-embedding_path = '/data/disk1/sharing/pretrained_embedding/glove/'
+embedding_path = '/mnt/cephfs/hadoop-compute/phoenix/arindam/projectKraken/embeddings/'#/data/disk1/sharing/pretrained_embedding/glove/'
 EMBEDDING_FILE = os.path.join(embedding_path, 'glove.6B.300d.txt')
 MAX_SEQ_LEN = None
 MAX_NUM_WORDS = 10000
@@ -36,10 +36,10 @@ df, partition_to_n_row = load_data(dataset)
 
 
 df['content_words'] = df['text'].apply(lambda s: word_tokenize(s))
-texts = df['content_words'].apply(lambda l: " ".join(l)) 
+texts = df['content_words'].apply(lambda l: " ".join(l))
 
 # Do not filter out "," and "."
-tokenizer = Tokenizer(num_words=MAX_NUM_WORDS, oov_token="<UNK>", filters='!"#$%&()*+-/:;<=>@[\]^_`{|}~') 
+tokenizer = Tokenizer(num_words=MAX_NUM_WORDS, oov_token="<UNK>", filters='!"#$%&()*+-/:;<=>@[\]^_`{|}~')
 
 tokenizer.fit_on_texts(texts)
 word_index = tokenizer.word_index
@@ -76,7 +76,7 @@ for word, i in word_index.items():
     if i >= MAX_FEATURES: continue
     embedding_vector = embeddings_index.get(word)
     if embedding_vector is not None: embedding_matrix[i] = embedding_vector
-    
+
 
 
 
@@ -114,9 +114,9 @@ y_test_mask = y_test.copy()
 y_test_mask[y_test_mask.isin(y_cols_unseen)] = 'unseen'
 
 filepath = 'data/BiLSTM_' + dataset + "_" + str(proportion) + '-AM.h5'
-checkpoint = ModelCheckpoint(filepath, monitor='val_loss', verbose=0, 
+checkpoint = ModelCheckpoint(filepath, monitor='val_loss', verbose=0,
                              save_best_only=True, mode='auto', save_weights_only=False)
-early_stop = EarlyStopping(monitor='val_loss', patience=20, mode='auto') 
+early_stop = EarlyStopping(monitor='val_loss', patience=20, mode='auto')
 callbacks_list = [checkpoint, early_stop]
 
 train_data = (X_train_seen, y_train_onehot)
@@ -126,9 +126,9 @@ test_data = (X_test, y_test_mask)
 ## If you want to plot the model
 # model = BiLSTM_LMCL(MAX_SEQ_LEN, MAX_FEATURES, EMBEDDING_DIM, n_class_seen, 'img/model.png', embedding_matrix)
 model = BiLSTM_LMCL(MAX_SEQ_LEN, MAX_FEATURES, EMBEDDING_DIM, n_class_seen, None, embedding_matrix)
-history = model.fit(train_data[0], train_data[1], epochs=200, batch_size=256, 
+history = model.fit(train_data[0], train_data[1], epochs=200, batch_size=256,
                     validation_data=valid_data, shuffle=True, verbose=1, callbacks=callbacks_list)
-                    
+
 
 
 y_pred_proba = model.predict(test_data[0])
@@ -136,7 +136,7 @@ y_pred_proba_train = model.predict(train_data[0])
 classes = list(le.classes_) + ['unseen']
 
 method = 'LOF (LMCL)'
-get_deep_feature = Model(inputs=model.input, 
+get_deep_feature = Model(inputs=model.input,
                          outputs=model.layers[-3].output)
 feature_test = get_deep_feature.predict(test_data[0])
 feature_train = get_deep_feature.predict(train_data[0])
